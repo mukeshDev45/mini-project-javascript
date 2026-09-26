@@ -5,6 +5,7 @@ let btns = ["yellow", "red", "purple", "green"];
 
 let started = false;
 let level = 0;
+let canClick = false; // block user input while sequence is playing
 
 let h2 = document.querySelector("h2");
 
@@ -32,6 +33,25 @@ function userFlash(btn) {
     }, 250);
 }
 
+function playSequence() {
+    // disable clicks while playing
+    canClick = false;
+    console.log('Playing sequence:', gameSeq);
+    for (let i = 0; i < gameSeq.length; i++) {
+        let color = gameSeq[i];
+        let btn = document.querySelector(`.${color}`);
+        // schedule flashes spaced by 600ms
+        setTimeout(function() {
+            gameFlash(btn);
+        }, i * 600);
+    }
+    // enable clicks after the whole sequence has played
+    setTimeout(function() {
+        canClick = true;
+        console.log('Sequence done, user can click');
+    }, gameSeq.length * 600);
+}
+
 function levelUp() {
     userSeq = [];
     level++;
@@ -40,16 +60,20 @@ function levelUp() {
     // random btn choose (use full length of btns array)
     let randIdx = Math.floor(Math.random() * btns.length);
     let randColor = btns[randIdx];
-    let randBtn = document.querySelector(`.${randColor}`);
 
     gameSeq.push(randColor);
     console.log('gameSeq', gameSeq);
-    gameFlash(randBtn);
+
+    // play full sequence so player can see previous steps
+    playSequence();
 }
 
 function checkAns(idx) {
+    console.log('checkAns', idx, userSeq[idx], gameSeq[idx]);
     if (userSeq[idx] === gameSeq[idx]) {
         if (userSeq.length === gameSeq.length) {
+            // block clicks while preparing next level
+            canClick = false;
             setTimeout(levelUp, 1000);
         }
     } else {
@@ -71,6 +95,9 @@ function btnPress() {
         return; // ignore this click as a user answer
     }
 
+    // if sequence is playing, ignore clicks
+    if (!canClick) return;
+
     let btn = this;
     userFlash(btn);
 
@@ -90,4 +117,5 @@ function reset() {
     gameSeq = [];
     userSeq = [];
     level = 0;
+    canClick = false;
 }
